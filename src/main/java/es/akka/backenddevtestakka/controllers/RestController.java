@@ -29,6 +29,7 @@ public class RestController {
         try {
             similarProducts = existingApisService.getSimilarProducts(productId);
         } catch (ProductNotFoundException ex) {
+            ex.printStackTrace();
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found", ex);
         }
         return similarProducts;
