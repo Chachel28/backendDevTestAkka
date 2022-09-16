@@ -1,0 +1,7 @@
+server:
+  port: 5000
+existingApis:
+  url: "http://localhost:3001"
+  paths:
+    get-product-similarids: "/product/{productId}/similarids"
+    get-product-productId: "/product/{productId}"
