@@ -15,6 +15,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 
 @Service
@@ -31,7 +32,7 @@ public class ExistingApisService {
 
     WebClient webClient = WebClient.create();
 
-    private ProductDetailDto getProductById(String id) throws ProductNotFoundException {
+    private ProductDetailDto getProductById(String id) {
 
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
@@ -42,8 +43,10 @@ public class ExistingApisService {
                 .onStatus(HttpStatus::is4xxClientError, clientResponse -> clientResponse.bodyToMono(String.class).flatMap(error -> Mono.error(new ProductNotFoundException(id))))
                 .onStatus(HttpStatus::is5xxServerError, clientResponse -> clientResponse.bodyToMono(String.class).flatMap(error -> Mono.error(new ProductInternalServerException())))
                 .bodyToMono(ProductDetailDto.class)
-                .timeout(Duration.ofSeconds(5))
-                .doOnError(ProductTimeOutException.class, Throwable::printStackTrace)
+                .timeout(Duration.ofSeconds(15))
+                .doOnError(TimeoutException.class, e -> {
+                    throw new ProductTimeOutException();
+                })
                 .block();
     }
 
@@ -58,12 +61,14 @@ public class ExistingApisService {
                 .onStatus(HttpStatus::is4xxClientError, clientResponse -> clientResponse.bodyToMono(String.class).flatMap(error -> Mono.error(new ProductNotFoundException(id))))
                 .onStatus(HttpStatus::is5xxServerError, clientResponse -> clientResponse.bodyToMono(String.class).flatMap(error -> Mono.error(new ProductInternalServerException())))
                 .bodyToMono(new ParameterizedTypeReference<List<String>>() {})
-                .timeout(Duration.ofSeconds(5))
-                .doOnError(ProductTimeOutException.class, Throwable::printStackTrace)
+                .timeout(Duration.ofSeconds(15))
+                .doOnError(TimeoutException.class, e -> {
+                    throw new ProductTimeOutException();
+                })
                 .block();
     }
 
-    public List<ProductDetailDto> getSimilarProducts(String id) throws ProductNotFoundException {
+    public List<ProductDetailDto> getSimilarProducts(String id) {
 
         List<String> ids = getSimilarProductsIdList(id);
         List<ProductDetailDto> similarProducts = new ArrayList<>();
